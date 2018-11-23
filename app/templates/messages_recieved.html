@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Messages</h1>
+    {% for post in messages %}
+        {% include '_post.html' %}
+    {% endfor %}
+{% endblock %}
