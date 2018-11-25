@@ -10,5 +10,5 @@ os.system("pip3 install Pillow")
 os.system("flask db init")
 os.system("flask db migrate")
 os.system("flask db upgrade")
-os.system("flask run")
+os.system("flask run --host=0.0.0.0")
 
