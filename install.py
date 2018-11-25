@@ -1,5 +1,6 @@
 import os
 os.system("pip3 install flask")
+os.system("pip3 install python-dotenv")
 os.system("pip3 install flask-wtf")
 os.system("pip3 install flask-sqlalchemy")
 os.system("pip3 install flask-migrate")
