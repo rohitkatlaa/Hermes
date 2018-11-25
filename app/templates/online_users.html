@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Online Users</h1>
+    {% for user1 in users %}
+    	{% if not user1.user_id==current_user.id %}
+    	    <table class="table table-hover">
+        <tr>
+            <td width="70px">
+		    
+                <a href="{{ url_for('user', username=user1.author.username) }}">
+                    {% if user1.author.profile_pic %}
+                <img src="{{ user1.author.profile_pic }}">
+                {% else %}
+                    <img src="{{ user1.author.avatar(70) }}" />
+                {% endif %}
+                </a>
+            </td>
+            <td>
+		   <a href="{{ url_for('user', username=user1.author.username) }}">
+                    {{ user1.author.username }}
+                </a>
+            </td>
+        </tr>
+</table>
+	{% endif %}
+    {% endfor %}
+{% endblock %}
+~                   

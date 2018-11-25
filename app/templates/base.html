@@ -33,6 +33,7 @@
                     <li><a href="{{ url_for('user', username=current_user.username) }}">Profile</a></li>
 		    <li><a href="{{ url_for('messages_sent') }}">Messages-sent</a></li>
 		    <li><a href="{{ url_for('messages_recieved') }}">Messages-recieved</a></li>
+		    <li><a href="{{ url_for('online_users') }}">Online Users</a></li>
                     <li><a href="{{ url_for('logout') }}">Logout</a></li>
                     {% endif %}
                 </ul>

@@ -18,3 +18,11 @@ Features:
 13)The Private messages that a user will recieve and send will be displayed in particular page.
 14)The project will also provide a feature for logout and one can login using a different account.
 
+Steps to install:
+	Run the following commands in terminal
+	1)python3 -m venv vir_env
+	2)source vir_env/bin/activate
+	3)python3 install.py
+Open your browser and type the url "http://localhost:5000/" without quotes.
+To open in other devices type your ip-address:5000 in the browser(to find ip address run "ifconfig | grep inet)
+
