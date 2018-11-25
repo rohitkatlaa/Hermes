@@ -24,5 +24,5 @@ Steps to install:
 	2)source vir_env/bin/activate
 	3)python3 install.py
 Open your browser and type the url "http://localhost:5000/" without quotes.
-
+To open in other devices type your ip-address:5000 in the browser(to find ip address run "ifconfig | grep inet)
 
