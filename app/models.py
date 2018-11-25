@@ -1,36 +1,36 @@
 from datetime import datetime
-from app import db, login
+from app import database, login
 from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
 from hashlib import md5
 from app.password3 import encrypt,decrypt,is_correct
 
 
-followers = db.Table('followers',
-    db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
+followers = database.Table('followers',
+    database.Column('follower_id', database.Integer, database.ForeignKey('user.id')),
+    database.Column('followed_id', database.Integer, database.ForeignKey('user.id'))
 )
 
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(120), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
-    posts = db.relationship('Post', backref='author', lazy='dynamic')
-    about_me = db.Column(db.String(140))
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    messages_sent = db.relationship('Message',
+class User(UserMixin, database.Model):
+    id = database.Column(database.Integer, primary_key=True)
+    username = database.Column(database.String(50), index=True, unique=True)
+    email = database.Column(database.String(100), index=True, unique=True)
+    password_hash = database.Column(database.String(50))
+    posts = database.relationship('Post', backref='author', lazy='dynamic')
+    about_me = database.Column(database.String(200))
+    last_seen = database.Column(database.DateTime, default=datetime.utcnow)
+    messages_sent = database.relationship('Message',
                                     foreign_keys='Message.sender_id',
                                     backref='author', lazy='dynamic')
-    messages_received = db.relationship('Message',
+    messages_received = database.relationship('Message',
                                         foreign_keys='Message.recipient_id',
                                         backref='recipient', lazy='dynamic')
-    last_message_read_time = db.Column(db.DateTime)
-    profile_pic = db.Column(db.String(60),nullable=True)
+    last_message_read_time = database.Column(database.DateTime)
+    profile_pic = database.Column(database.String(60),nullable=True)
 
 
-    followed = db.relationship('User', secondary=followers,primaryjoin=(followers.c.follower_id == id),secondaryjoin=(followers.c.followed_id == id),backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
-    likes_sent= db.relationship('Likes',foreign_keys='Likes.likesSent_id',backref='author', lazy='dynamic')
+    followed = database.relationship('User', secondary=followers,primaryjoin=(followers.c.follower_id == id),secondaryjoin=(followers.c.followed_id == id),backref=database.backref('followers', lazy='dynamic'), lazy='dynamic')
+    likes_sent= database.relationship('Likes',foreign_keys='Likes.likesSent_id',backref='author', lazy='dynamic')
+    no_of_users = database.relationship('No_of_users', backref='author', lazy='dynamic')
 
     def new_messages(self):
         last_read_time = self.last_message_read_time or datetime(1900, 1, 1)
@@ -48,9 +48,11 @@ class User(UserMixin, db.Model):
     	return is_correct(password,self.password_hash)
         #return check_password_hash(self.password_hash, password)
 
-    def avatar(self, size):
-        digest = md5(self.email.lower().encode('utf-8')).hexdigest()
-        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(digest, size)
+    def avatar(self,a):
+        if a is 256:
+            return 'static/posts_image/profile_pic.png'
+        else:
+            return 'static/posts_image/profile_pic2.png'
     def profile_picture(self):
         if self.profile_pic:
             return self.profile_pic
@@ -83,16 +85,16 @@ def load_user(id):
     return User.query.get(int(id))
 
 
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    body = db.Column(db.String(140))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    likes_received = db.relationship('Likes',
+class Post(database.Model):
+    id = database.Column(database.Integer, primary_key=True)
+    body = database.Column(database.String(200))
+    timestamp = database.Column(database.DateTime, index=True, default=datetime.utcnow)
+    user_id = database.Column(database.Integer, database.ForeignKey('user.id'))
+    likes_received = database.relationship('Likes',
                                         foreign_keys='Likes.likesRecieved_id',
                                         backref='recipient', lazy='dynamic')
-    image_file = db.Column(db.String(60),nullable=True)
-    no_of_likes = db.Column(db.Integer)
+    image_file = database.Column(database.String(60),nullable=True)
+    no_of_likes = database.Column(database.Integer)
     def is_liking(self,user):
         return self.likes_received.filter(Likes.likesSent_id==user.id).count() > 0
 
@@ -101,21 +103,25 @@ class Post(db.Model):
     def return_id(self):
         return self.id
 
-class Message(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    body = db.Column(db.String(140))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+class Message(database.Model):
+    id = database.Column(database.Integer, primary_key=True)
+    sender_id = database.Column(database.Integer, database.ForeignKey('user.id'))
+    recipient_id = database.Column(database.Integer, database.ForeignKey('user.id'))
+    body = database.Column(database.String(200))
+    timestamp = database.Column(database.DateTime, index=True, default=datetime.utcnow)
 
     def __repr__(self):
         return '<Message {}>'.format(self.body)
 
 
-class Likes(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    likesSent_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    likesRecieved_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+class Likes(database.Model):
+    id = database.Column(database.Integer, primary_key=True)
+    likesSent_id = database.Column(database.Integer, database.ForeignKey('user.id'))
+    likesRecieved_id = database.Column(database.Integer, database.ForeignKey('post.id'))
+    timestamp = database.Column(database.DateTime, index=True, default=datetime.utcnow)
 
-
+class No_of_users(database.Model):
+    id = database.Column(database.Integer, primary_key=True)
+    user_id = database.Column(database.Integer, database.ForeignKey('user.id'))
+    online=database.Column(database.Integer)
+    
