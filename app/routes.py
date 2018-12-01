@@ -15,7 +15,6 @@ from app.forms import MessageForm
 from app.models import Message
 from app.models import Likes
 from app.models import No_of_users
-from app.check_email import is_valid_email_id
 
 @app.before_request
 def before_request():
