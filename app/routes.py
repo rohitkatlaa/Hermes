@@ -15,12 +15,62 @@ from app.forms import MessageForm
 from app.models import Message
 from app.models import Likes
 from app.models import No_of_users
+from app.models import Group,Group_members
+from app.forms import GroupForm
+from app.models import Group_post
+from app.forms import AddmemForm
 
 @app.before_request
 def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         database.session.commit()
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is None or not user.check_password(form.password.data):
+            flash('Invalid username or password')
+            return redirect(url_for('login'))
+        login_user(user, remember=form.remember_me.data)
+        next_page = request.args.get('next')
+        if not next_page or url_parse(next_page).netloc != '':
+            next_page = url_for('index')
+            user1 = No_of_users.query.filter_by(user_id=user.id).first()
+            user1.online=1
+            database.session.commit()
+        return redirect(next_page)
+    return render_template('login.html', title='Sign In', form=form)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = RegistrationForm() 
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data
+)
+        user.set_password(form.password.data)
+        database.session.add(user)
+        database.session.commit()
+        num_user=No_of_users(author=user,online=1)
+        database.session.add(num_user)
+        database.session.commit()
+        flash('Congratulations, you are now a registered user!')
+        return redirect(url_for('login'))
+    return render_template('register.html', title='Register', form=form)
+
+@app.route('/logout')
+def logout():
+    user = No_of_users.query.filter_by(user_id=current_user.id).first()
+    user.online=0
+    database.session.commit()
+    logout_user()
+    return redirect(url_for('index'))
 
 def save_picture(form_picture):
     random_hex=secrets.token_hex(8)
@@ -64,55 +114,6 @@ def index():
         return redirect(url_for('index'))
     posts=current_user.posts.order_by(Post.timestamp.desc())
     return render_template('index.html', title='Home', posts=posts,form=form,user=current_user)
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user is None or not user.check_password(form.password.data):
-            flash('Invalid username or password')
-            return redirect(url_for('login'))
-        login_user(user, remember=form.remember_me.data)
-        next_page = request.args.get('next')
-        if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('index')
-            user1 = No_of_users.query.filter_by(user_id=user.id).first()
-            user1.online=1
-            database.session.commit()
-        return redirect(next_page)
-    return render_template('login.html', title='Sign In', form=form)
-
-
-@app.route('/logout')
-def logout():
-    user = No_of_users.query.filter_by(user_id=current_user.id).first()
-    user.online=0
-    database.session.commit()
-    logout_user()
-    return redirect(url_for('index'))
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    form = RegistrationForm() 
-    if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data
-)
-        user.set_password(form.password.data)
-        database.session.add(user)
-        database.session.commit()
-        num_user=No_of_users(author=user,online=1)
-        database.session.add(num_user)
-        database.session.commit()
-        flash('Congratulations, you are now a registered user!')
-        return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form)
 
 @app.route('/<username>')
 @login_required
@@ -250,3 +251,74 @@ def most_liked():
 def online_users():
     users=No_of_users.query.filter_by(online=1).all()
     return render_template('online_users.html',users=users)
+
+@app.route('/group_create', methods=['GET', 'POST'])
+@login_required
+def group_create():
+    form=GroupForm()
+    if form.validate_on_submit():
+        picture_file=save_picture2(form.group_pic.data)
+        group=Group(name=form.group_name.data,group_picture=picture_file,description=form.group_description.data,admin=1)
+        database.session.add(group)
+        database.session.commit()
+        group_mem=Group_members(author=current_user,recipient=group)
+        database.session.add(group_mem)
+        database.session.commit()
+        flash('You successfully created a group')
+        return redirect(url_for('index'))
+    return render_template('create_group.html', title='Creating a group',form=form)
+
+
+@app.route('/group')
+@login_required
+def all_group():
+    groups=current_user.members_in()
+    return render_template('all_groups.html',groups=groups)
+
+@app.route('/group/<groupname>')
+@login_required
+def group_page(groupname):
+    group = Group.query.filter_by(name=groupname).first()
+    posts=group.posts()
+    return render_template('group.html', group=group,posts=posts)
+
+@app.route('/group/<groupname>/members')
+@login_required
+def group_mem(groupname):
+    group = Group.query.filter_by(name=groupname).first()
+    users = group.group_mem()
+    return render_template('group_mem.html', users=users)
+
+@app.route("/group/<groupname>/post", methods=['GET', 'POST'])
+@login_required
+def group_post(groupname):
+    group = Group.query.filter_by(name=groupname).first()
+    form = PostForm()
+    if form.validate_on_submit():
+        if form.picture.data:
+            picture_file=save_picture(form.picture.data)
+            msg = Group_post(author=current_user,recipient=group,body=form.post.data,image_file=picture_file)
+        else:
+            msg = Group_post(author=current_user,recipient=group,body=form.post.data,image_file=form.picture.data)
+        database.session.add(msg)
+        database.session.commit()
+        flash('Your post is now live!')
+        return redirect(url_for('group_page',groupname=group.name))
+    return render_template("group_post.html",form=form)
+
+@app.route("/group/<groupname>/add_member", methods=['GET', 'POST'])
+@login_required
+def add_member(groupname):
+    group = Group.query.filter_by(name=groupname).first()
+    form=AddmemForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is None:
+            flask('User doesnot exists')
+            return redirect(url_for('group_page',groupname=group.name))
+        group_mem=Group_members(author=user,recipient=group)
+        database.session.add(group_mem)
+        database.session.commit()
+        flash('Successfully added a member')
+        return redirect(url_for('group_page',groupname=group.name))
+    return render_template("add_member.html",form=form)

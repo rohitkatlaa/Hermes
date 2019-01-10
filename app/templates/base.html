@@ -1,7 +1,7 @@
 {% extends 'bootstrap/base.html' %}
 
 {% block title %}
-    {% if title %}{{ title }} - Hermes{% else %}Welcome to Hermes{% endif %}
+    {% if title %}{{ title }} - HERMES{% else %}Welcome to HERMES{% endif %}
 {% endblock %}
 
 {% block navbar %}
@@ -14,7 +14,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="{{ url_for('index') }}">Hermes</a>
+                <a class="navbar-brand" href="{{ url_for('index') }}">HERMES</a>
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
@@ -24,6 +24,7 @@
 		    <li><a href="{{ url_for('follower_messages') }}">Follower_Messages</a></li>
 		    <li><a href="{{ url_for('liked_posts') }}">Liked_posts</a></li>
 		    <li><a href="{{ url_for('most_liked') }}">Most_liked</a></li>
+		    <li><a href="{{ url_for('all_group') }}">Groups</li>
 		    {% endif %}
                 </ul>
                 <ul class="nav navbar-nav navbar-right">

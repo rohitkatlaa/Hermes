@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <br>
+    {% for group in groups %}
+    	<table class="table table-hover">
+		<tr>
+            	<td width="70px">
+			<img src="{{ group.recipient.group_picture }}">
+		</td>
+		<td>
+                <a href="{{ url_for('group_page', groupname=group.recipient.name) }}">
+                    {{ group.recipient.name }}
+                </a>
+		<br>
+		Created at: {{ group.recipient.creation_time }}
+		<br>
+		Description: {{ group.recipient.description }}
+		</td>
+		</tr>
+	</table>
+
+        
+    {% endfor %}
+{% endblock %}
+
