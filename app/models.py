@@ -21,6 +21,7 @@ class User(UserMixin, database.Model):
     messages_sent = database.relationship('Message',
                                     foreign_keys='Message.sender_id',
                                     backref='author', lazy='dynamic')
+    group_post_sent = database.relationship('Group_post',foreign_keys='Group_post.sender_id',backref='author', lazy='dynamic')
     messages_received = database.relationship('Message',
                                         foreign_keys='Message.recipient_id',
                                         backref='recipient', lazy='dynamic')
@@ -31,6 +32,7 @@ class User(UserMixin, database.Model):
     followed = database.relationship('User', secondary=followers,primaryjoin=(followers.c.follower_id == id),secondaryjoin=(followers.c.followed_id == id),backref=database.backref('followers', lazy='dynamic'), lazy='dynamic')
     likes_sent= database.relationship('Likes',foreign_keys='Likes.likesSent_id',backref='author', lazy='dynamic')
     no_of_users = database.relationship('No_of_users', backref='author', lazy='dynamic')
+    group_mem= database.relationship('Group_members',foreign_keys='Group_members.member_id',backref='author', lazy='dynamic')
 
     def new_messages(self):
         last_read_time = self.last_message_read_time or datetime(1900, 1, 1)
@@ -76,6 +78,9 @@ class User(UserMixin, database.Model):
         liked = Post.query.join(Likes, (Likes.likesRecieved_id == Post.id)).filter(Likes.likesSent_id == self.id)
         return liked
 
+    def members_in(self):
+        group_mem=Group_members.query.filter(Group_members.member_id==self.id)
+        return group_mem
 
 
 @login.user_loader
@@ -122,4 +127,37 @@ class No_of_users(database.Model):
     id = database.Column(database.Integer, primary_key=True)
     user_id = database.Column(database.Integer, database.ForeignKey('user.id'))
     online=database.Column(database.Integer)
-    
+
+class Group(database.Model): 
+    id = database.Column(database.Integer, primary_key=True)
+    name=database.Column(database.String(20),index=True, unique=True)
+    creation_time=database.Column(database.DateTime, index=True, default=datetime.utcnow)
+    admin=database.Column(database.Integer)
+    group_picture=database.Column(database.String(60),nullable=True)
+    description=database.Column(database.String(120),nullable=True)
+    group = database.relationship('Group_members',foreign_keys='Group_members.group_id',backref='recipient', lazy='dynamic')
+    group_msg = database.relationship('Group_post',foreign_keys='Group_post.group_id',backref='recipient',lazy='dynamic')
+    def group_mem(self):
+        group_mem=Group_members.query.filter(Group_members.group_id==self.id)
+        return group_mem
+
+    def posts(self):
+        post=Group_post.query.filter(Group_post.group_id==self.id)
+        return post
+
+class Group_members(database.Model):
+    id = database.Column(database.Integer, primary_key=True)
+    member_id=database.Column(database.Integer, database.ForeignKey('user.id'))
+    group_id=database.Column(database.Integer, database.ForeignKey('group.id'))
+    joining_time=database.Column(database.DateTime, index=True, default=datetime.utcnow)
+   
+class Group_post(database.Model):
+    id = database.Column(database.Integer, primary_key=True)
+    sender_id = database.Column(database.Integer, database.ForeignKey('user.id'))
+    group_id = database.Column(database.Integer, database.ForeignKey('group.id'))
+    body = database.Column(database.String(200))
+    timestamp = database.Column(database.DateTime, index=True, default=datetime.utcnow)
+    image_file = database.Column(database.String(60),nullable=True)
+
+    def __repr__(self):
+        return '<Message {}>'.format(self.body)

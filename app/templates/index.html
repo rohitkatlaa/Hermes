@@ -7,6 +7,7 @@
     {{ wtf.quick_form(form) }}
     <br>
     {% endif %}
+    <p><a href="{{ url_for('group_create',) }}">Create a new group</a></p>
     {% for post in posts %}
         {% include '_post.html' %}
     {% endfor %}

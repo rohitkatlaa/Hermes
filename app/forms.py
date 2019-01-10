@@ -5,7 +5,7 @@ from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
 from app.models import User
 from wtforms import TextAreaField
 from wtforms.validators import Length
-from app.models import Message
+from app.models import Message,Group
 
 
 class LoginForm(FlaskForm):
@@ -58,3 +58,13 @@ class MessageForm(FlaskForm):
     message = TextAreaField('Message', validators=[
         DataRequired(), Length(min=0, max=140)])
     submit = SubmitField('Submit')
+
+class GroupForm(FlaskForm):
+    group_name = TextAreaField('Enter the group name', validators=[DataRequired(), Length(min=1, max=20)])
+    group_description = TextAreaField('Enter the group desription', validators=[DataRequired(), Length(min=1, max=120)])
+    group_pic=FileField('Group image',validators=[FileAllowed(['jpg','png'])])
+    submit = SubmitField('Submit')
+
+class AddmemForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    submit = SubmitField('Add Member')
